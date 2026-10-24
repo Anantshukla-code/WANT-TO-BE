@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Special Message For You</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%);
+      font-family: 'Montserrat', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Background Floating Hearts */
+    .bg-hearts {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-heart {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 20px;
+      animation: floatUp 8s linear infinite;
+      bottom: -100px;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+      100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Container */
+    .main-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* ENVELOPE STYLES */
+    .envelope-wrapper {
+      position: relative;
+      width: 320px;
+      height: 220px;
+      background-color: #e91e63;
+      border-radius: 10px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: transform 0.3s ease, opacity 0.5s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .envelope-wrapper:hover {
+      transform: scale(1.03);
+    }
+
+    .envelope-wrapper .flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 160px solid transparent;
+      border-right: 160px solid transparent;
+      border-top: 120px solid #c2185b;
+      transform-origin: top;
+      transition: transform 0.6s ease-in-out;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .envelope-wrapper .pocket {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 160px solid #f48fb1;
+      border-right: 160px solid #f48fb1;
+      border-bottom: 110px solid #ec407a;
+      border-radius: 0 0 10px 10px;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .envelope-wrapper .wax-seal {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 55px;
+      height: 55px;
+      background: radial-gradient(circle, #ff1744 0%, #b71c1c 100%);
+      border-radius: 50%;
+      z-index: 5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+
+    .click-hint {
+      position: absolute;
+      bottom: -40px;
+      width: 100%;
+      text-align: center;
+      color: #ad1457;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 1px;
+      animation: pulse 1.5s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(0.98); }
+    }
+
+    /* Opened State */
+    .envelope-wrapper.open .flap {
+      transform: rotateX(180deg);
+      z-index: 1;
+    }
+
+    .envelope-wrapper.open .wax-seal {
+      display: none;
+    }
+
+    /* Hidden Envelope State */
+    .envelope-wrapper.is-hidden {
+      display: none !important;
+    }
+
+    /* LETTER CARD STYLES */
+    .letter-card {
+      display: none;
+      background: #fff8f8;
+      background-image: radial-gradient(#f8bbd0 0.75px, transparent 0.75px);
+      background-size: 16px 16px;
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 20px 40px rgba(173, 20, 87, 0.15);
+      border: 2px solid #f8bbd0;
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .letter-card.is-visible {
+      display: block !important;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .letter-card h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.8rem;
+      color: #c2185b;
+      margin-bottom: 20px;
+    }
+
+    .letter-content {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.45rem;
+      color: #424242;
+      line-height: 1.8;
+      text-align: left;
+      margin-bottom: 30px;
+      white-space: pre-line;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 22px;
+      border-radius: 12px;
+      border-left: 4px solid #e91e63;
+    }
+
+    .question-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ad1457;
+      margin-bottom: 25px;
+    }
+
+    /* BUTTONS */
+    .button-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      min-height: 60px;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+
+    .btn-yes {
+      background: linear-gradient(45deg, #e91e63, #ff4081);
+      color: white;
+    }
+
+    .btn-yes:hover {
+      transform: scale(1.1);
+      box-shadow: 0 8px 25px rgba(233, 30, 99, 0.4);
+    }
+
+    .btn-no {
+      background-color: #eeeeee;
+      color: #616161;
+      position: relative;
+    }
+
+    /* MODAL CELEBRATION */
+    .celebration-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .celebration-card {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 25px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .celebration-card h2 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3rem;
+      color: #e91e63;
+      margin-bottom: 10px;
+    }
+
+    .celebration-card p {
+      font-size: 1.1rem;
+      color: #424242;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .celebration-card .big-heart {
+      font-size: 60px;
+      margin-bottom: 15px;
+      animation: heartBeat 1s infinite;
+    }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Floating Hearts -->
+  <div class="bg-hearts" id="bgHearts"></div>
+
+  <div class="main-wrapper">
+    <!-- ENVELOPE -->
+    <div class="envelope-wrapper" id="envelope">
+      <div class="flap"></div>
+      <div class="pocket"></div>
+      <div class="wax-seal">❤️</div>
+      <div class="click-hint">Tap Anywhere to Open Letter 💌</div>
+    </div>
+
+    <!-- LETTER CARD -->
+    <div class="letter-card" id="letterCard">
+      <h1>My Dearest Maharani,</h1>
+      
+      <div class="letter-content">You know what my pretty, today we completed 231 days from 8th of March when I lost myself in you at Roastery Cafe cum my destination towards you, or I may quote it as My First step towards MY PALACE of togetherness.
+
+Even after these many days I can't forget your very smell Esha, the spark in your eyes, the hug you offered me was my trophy! I'm blessed to be with you.
+
+I loved you from that very moment till today in my heart, just so you know it is getting more and more intense by each passing day.
+
+At present I don't want to delay it further, don't want to keep it in me, don't want to just say I miss you or any other phrase except one which I have engraved in my veins. So just clarify me, would you be mine for this birth or the upcoming ones later?
+
+If it's a YES from your side do let me know your acceptance of my small date, I would love to be with you tomorrow or soon!
+
+I Truly want you, I can't share you, I Need you just on me & I want to kiss you, taste all of you, lift you up, hold your hands and take a walk on beach.
+
+(Sakshi Singh Rawal, man)
+Anant Shukla ❤️</div>
+
+      <div class="question-title">Will you make me your man and accept this date? ✨</div>
+
+      <div class="button-group">
+        <button class="btn btn-yes" id="yesBtn">YES! 💖</button>
+        <button class="btn btn-no" id="noBtn">NO 😜</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELEBRATION MODAL -->
+  <div class="celebration-overlay" id="celebrationModal">
+    <div class="celebration-card">
+      <div class="big-heart">💖</div>
+      <h2>It's a Date!</h2>
+      <p>You've made my entire world light up! I can't wait to spend this unforgettable time with you. 🥰</p>
+    </div>
+  </div>
+
+  <script>
+    // Create background floating hearts
+    const bgHearts = document.getElementById('bgHearts');
+    const heartSymbols = ['❤️', '💖', '💕', '💗', '🌸'];
+    
+    for (let i = 0; i < 25; i++) {
+      const heart = document.createElement('div');
+      heart.className = 'bg-heart';
+      heart.innerText = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.animationDuration = (Math.random() * 5 + 5) + 's';
+      heart.style.animationDelay = (Math.random() * 5) + 's';
+      heart.style.fontSize = (Math.random() * 15 + 15) + 'px';
+      bgHearts.appendChild(heart);
+    }
+
+    // Direct, infallible open handler
+    const envelope = document.getElementById('envelope');
+    const letterCard = document.getElementById('letterCard');
+
+    function openEnvelopeNow(e) {
+      if (e) e.preventDefault();
+      envelope.classList.add('open');
+      
+      setTimeout(() => {
+        envelope.classList.add('is-hidden');
+        letterCard.classList.add('is-visible');
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 50, spread: 70, origin: { y: 0.7 } });
+        }
+      }, 500);
+    }
+
+    envelope.onclick = openEnvelopeNow;
+
+    // Dodge NO button
+    const noBtn = document.getElementById('noBtn');
+    function dodgeNo(e) {
+      if (e) e.preventDefault();
+      const x = (Math.random() - 0.5) * 220;
+      const y = (Math.random() - 0.5) * 160;
+      noBtn.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    noBtn.onmouseover = dodgeNo;
+    noBtn.onclick = dodgeNo;
+
+    // Handle YES click
+    const yesBtn = document.getElementById('yesBtn');
+    yesBtn.onclick = function() {
+      document.getElementById('celebrationModal').style.display = 'flex';
+      
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+
+      (function frame() {
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 7, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#e91e63', '#ff4081', '#ffffff'] });
+          confetti({ particleCount: 7, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#e91e63', '#ff4081', '#ffffff'] });
+        }
+
+        if (Date.now() < animationEnd) {
+          requestAnimationFrame(frame);
+        }
+      }());
+    };
+  </script>
+</body>
+</html>
